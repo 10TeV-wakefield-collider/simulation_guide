@@ -12,6 +12,8 @@ It summarizes the capabilities of some of the relevant codes for these simulatio
    optimization_tools/index
    open_problems/index
 
+If you encounter any issues with this documentation, please report them on our `GitHub Issues page <https://github.com/10TeV-wakefield-collider/simulation_guide/issues>`_.
+
 Indices and tables
 ==================
 
