@@ -11,13 +11,13 @@ Overview
 --------
 
 This simulates the acceleration of a 200 pC electron beam in laser-driven plasma stage.
-The plasma density profile is longitudinally uniform and transversally parabolic, so as to guide the laser driver.
+The plasma density profile is longitudinally uniform and transversally parabolic, so as to **guide the laser driver**.
 The electron beam profile is transversally Gaussian and longitudinally trapezoidal.
 
-- The transverse beam size has been tuned so as to be matched to the transverse focusing in the plasma wakefield.
+- The transverse beam size has been tuned so as to be **matched to the transverse focusing** in the plasma wakefield.
   (This minimizes oscillations of the beam size during acceleration, thus ensuring better preservation of emittance.)
 
-- The trapezoidal beam profile has been tuned so as to optimize beamloading, i.e. ensure that each longitudinal
+- The trapezoidal beam profile has been tuned so as to **optimize beamloading**, i.e. ensure that each longitudinal
   slice of the beam gains the same amount of energy over the length of the plasma stage, to avoid large energy spread.
 
 .. warning::
@@ -40,6 +40,8 @@ You can download the script below by clicking on :download:`this link <wake_t_cy
 run it in your terminal by typing::
 
    python wake_t_cylindrical.py
+
+The script takes about 12 minutes to run on a single CPU core, and is numerically converged.
 
 .. literalinclude:: wake_t_cylindrical.py
    :language: python
