@@ -1,47 +1,84 @@
-import sys
-import os
 import numpy as np
 import scipy.constants as sc
+from wake_t import ParticleBunch, GaussianPulse, PlasmaStage, Beamline
 
-from wake_t import (ParticleBunch, GaussianPulse, PlasmaStage,
-                    ActivePlasmaLens, Drift, Beamline)
-from wake_t.beamline_elements import FieldElement
-from bunch_utils import trapezoidal_bunch
-from wake_t.diagnostics import analyze_bunch
+# Fix random seed for reproducibility
+np.random.seed(0)
 
-from aptools.plotting.quick_diagnostics import (
-    phase_space_overview,
-    slice_analysis,
-)
+def trapezoidal_bunch(
+    i0,
+    i1,
+    n_part,
+    gamma0,
+    s_g,
+    length,
+    s_z,
+    emit_x,
+    s_x,
+    emit_y,
+    s_y,
+    x_c=0.0,
+    y_c=0.0,
+):
+    """Create a trapezoidal particle bunch."""
+    n_part = int(n_part)
 
-from wake_t.diagnostics import analyze_bunch_list, analyze_bunch
-from wake_t.utilities.bunch_generation import get_from_file
+    q_plat = (min(i0, i1) / sc.c) * length
+    q_triag = ((max(i0, i1) - min(i0, i1)) / sc.c) * length / 2.0
+    q_gaus0 = (i0 / sc.c) * np.sqrt(2 * np.pi) * s_z / 2.0
+    q_gaus1 = (i1 / sc.c) * np.sqrt(2 * np.pi) * s_z / 2.0
+    q_tot = q_plat + q_triag + q_gaus0 + q_gaus1
 
-import matplotlib as mpl
-from matplotlib import pyplot as plt
-from matplotlib.colors import LogNorm, SymLogNorm
+    n_plat = int(n_part * q_plat / q_tot)
+    n_triag = int(n_part * q_triag / q_tot)
+    n_gaus0 = int(n_part * q_gaus0 / q_tot)
+    n_gaus1 = int(n_part * q_gaus1 / q_tot)
+
+    z_plat = np.random.uniform(0.0, length, n_plat)
+    if i0 <= i1:
+        z_triag = np.random.triangular(0.0, length, length, n_triag)
+    else:
+        z_triag = np.random.triangular(0.0, 0.0, length, n_triag)
+    z_gaus0 = s_z * np.random.standard_normal(2 * n_gaus0)
+    z_gaus1 = s_z * np.random.standard_normal(2 * n_gaus1)
+
+    z = np.concatenate(
+        (
+            z_gaus0[np.where(z_gaus0 < 0)],
+            z_plat,
+            z_triag,
+            z_gaus1[np.where(z_gaus1 > 0)] + length,
+        )
+    )
+
+    z = z - length / 2.0  # shift to final position
+
+    n_part = len(z)
+    x = x_c + s_x * np.random.standard_normal(n_part)
+    y = y_c + s_y * np.random.standard_normal(n_part)
+
+    gamma = np.random.normal(gamma0, s_g, n_part)
+    s_ux = emit_x / s_x
+    ux = s_ux * np.random.standard_normal(n_part)
+    s_uy = emit_y / s_y
+    uy = s_uy * np.random.standard_normal(n_part)
+    uz = np.sqrt((gamma**2 - 1) - ux**2 - uy**2)
+    q = np.ones(n_part) * q_tot / n_part
+
+    return x, y, z, ux, uy, uz, q
 
 def beta_gamma_from_GeV(m_species,E_kin_GeV):
-
     E_rest_GeV = m_species * sc.c**2 / sc.electron_volt / 1e9
-
     return np.sqrt((E_kin_GeV/E_rest_GeV + 1)**2 - 1)
 
 def gamma_from_GeV(m_species,E_kin_GeV):
-
-        E_rest_GeV = m_species * sc.c**2 / sc.electron_volt / 1e9
-
-        return 1 + E_kin_GeV / E_rest_GeV
+    E_rest_GeV = m_species * sc.c**2 / sc.electron_volt / 1e9
+    return 1 + E_kin_GeV / E_rest_GeV
 
 def calculate_critical_density(wavelength):
     """Calculate the critical density for a given laser wavelength."""
     omega_L = 2 * np.pi * sc.c / wavelength
     return sc.m_e * sc.epsilon_0 * omega_L**2 / sc.elementary_charge**2
-
-def matched_beta(gamma,lambda_L,n_e):
-    """Matching condition for full blowout"""
-    n_c = calculate_critical_density(lambda_L)
-    return np.sqrt(2*gamma) * lambda_L * np.sqrt(n_c/n_e) / (2*np.pi)
 
 def matched_beam_size(m_species, E_kin_GeV, beta_matched, norm_emittance):
     """ Matched beam size (1-RMS) for full blowout. """
@@ -58,23 +95,17 @@ lambda_L = 0.8e-6  # laser wavelength (m)
 energies_GeV = np.array([1,10,100,1e3,1e4])  # initial beam energy
 betas_fb = np.array([8.065e-4, 2.550e-3, 8.063e-3, 2.550e-2, 8.063e-2])  # analytical value for full blowout
 betas_opt = np.array([9.330e-4, 2.775e-3, 7.746e-6, 1.721e-2, 3.644e-2])  # measured in optimization study
-
 matched_beam_size(m_species=sc.m_e, E_kin_GeV=1, beta_matched=betas_opt[0], norm_emittance=1e-6)
 
 # Best values from the case of 086_APOSSMM..
-x0 = 0.469660
-x1 = 2.973740
-x2 = 5.453219
-
-beam_i_r2 = x0
-beam_z_i_2 = x1
-beam_length = x2
+beam_i_r2 = 0.469660
+beam_z_i_2 = 2.973740
+beam_length = 5.453219
 
 def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_size_rms=None,
-                          sz_beam=1e-6, num_ppc=2, num_snapshots=500, diags=True, diag_dir=None, show_progress_bar=False):
+                          sz_beam=1e-6, num_ppc=2, num_snapshots=500, diags=True, show_progress_bar=False):
     # Laser parameters
     # ----------------
-
     a_0 = 2.36
     w_0 = 36e-6
     tau_fwhm = 7.33841e-14 * np.sqrt(2.0 * np.log(2))  # FWHM in intensity
@@ -94,10 +125,9 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
     i1_beam = 2 * beam_i_r1 * i_avg
     i2_beam = 2 * beam_i_r2 * i_avg
 
-    n_part = 50000  # MG: originally 50k but yielded spiky phase space
+    n_part = 50000
     gamma_beam = gamma_from_GeV(m_species=sc.electron_mass, E_kin_GeV=energies_GeV[i])  # calculate beam gamma
     ene_sp = 0.1  # energy spread in %
-    # making a change here back to the original
     sz0 = sz_beam  # gaussian decay
     n_emitt_x = 1e-6
     n_emitt_y = 1e-6
@@ -110,7 +140,7 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
         sx0 = beam_size_rms
         sy0 = beam_size_rms
 
-    # Generate bunch (already controls numpy seed for reproducibilty)
+    # Generate bunch
     x, y, z, ux, uy, uz, q = trapezoidal_bunch(
         i1_beam,
         i2_beam,
@@ -123,8 +153,6 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
         s_x=sx0,
         emit_y=n_emitt_y,
         s_y=sy0,
-        zf=0.0,
-        tf=0.0,
     )
 
     z -= l_beam / 2 + z_beam  # shift the longitudinal beam position away from the driver
@@ -134,7 +162,6 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
     # Plasma density profile
     # ----------------------
     l_plateau = 28.0e-2 # (m)  # SH change for short test
-    l_plasma = l_plateau
 
     # Determine guiding channel.
     r_e = sc.e**2 / (4.0 * np.pi * sc.epsilon_0 * sc.m_e * sc.c**2)
@@ -177,7 +204,7 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
     kp = 2 * np.pi * np.sqrt(n_e_n_c) / lambda_L
     kpdz_inv = 40 # 1 / (kp * dz), resolution parameter where typically 20 - 40 is good
     #dz = tau_fwhm / 40 * sc.c  # 1 / (kp * dz) is about 20 in case 7.33841e-14 * np.sqrt(2.0 * np.log(2))
-    dz = 1 / kpdz_inv / kp  # MG: next step: make avariable with respect to beam length
+    dz = 1 / kpdz_inv / kp
     nr = int(r_max / dr)
     nz = int(l_box / dz)
     laser_evolution = True
@@ -203,8 +230,6 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
         dz_fields= 1 * l_box,
         ppc=num_ppc,
         parabolic_coefficient=rel_delta_n_over_w2,
-        #bunch_pusher="boris",
-        #plasma_pusher="ab5",  # should be ab2 now
         laser_envelope_substeps=4,
         laser_envelope_nxi=nz * 4,
         max_gamma=25
@@ -216,13 +241,9 @@ def simulate_plasma_stage(beam_i_r2=0.8, beam_z_i_2=0.0, beam_length_um=5, beam_
         plasma_plateau,
     ])
 
-    if type(diag_dir) == str:
-        bunch_list = beamline.track(bunch, opmd_diag=diags, show_progress_bar=show_progress_bar, diag_dir=diag_dir)  # SH False show
-    else:
-        bunch_list = beamline.track(bunch, opmd_diag=diags, show_progress_bar=show_progress_bar)  # SH False show
-    return bunch_list, num_snapshots_plateau
+    beamline.track(bunch, opmd_diag=diags, show_progress_bar=show_progress_bar, diag_dir='diags')
 
-bunch_list, num_snaps_plateau = simulate_plasma_stage(
+simulate_plasma_stage(
     beam_i_r2=beam_i_r2,
     beam_z_i_2=beam_z_i_2,
     beam_length_um=beam_length,
@@ -230,6 +251,5 @@ bunch_list, num_snaps_plateau = simulate_plasma_stage(
     num_ppc=2,
     num_snapshots=50,
     diags=True,
-    diag_dir="./diags_sz_1e-7_ppc_2",
     show_progress_bar=True
 )

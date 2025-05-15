@@ -5,6 +5,11 @@ This page describes how to run a single-stage laser-driven acceleration simulati
 using the quasi-static code `Wake-T <https://wake-t.readthedocs.io/en/latest/>`_. For more details on the
 approximations made in Wake-T and their validity, see :doc:`../../validity_of_codes/index`.
 
+Overview:
+- Laser in a flat stage, with parabolic plasma channel for guiding
+- Trapezoidal beam ; beam transverse size and length need to be carefully chosen (typically with optimization)
+optimize matchign and beamloading
+
 Installation
 ------------
 
