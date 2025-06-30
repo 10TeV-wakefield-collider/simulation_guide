@@ -25,7 +25,7 @@ rel_delta_n_over_w2 = 1.0 / (np.pi * r_e * matched_channel_waist ** 4 * n_p0)
 # A simple constant plasma density with a parabolic radial profile.
 def density_profile(z, r):
     """ Define plasma density as a function of ``z`` and ``r``. """
-    # Allocate relative density array.
+    # Allocate density array.
     n = n_p0 * np.ones_like(z)
     # Add radial parabolic profile
     n = n * (1. + rel_delta_n_over_w2 * r**2)
@@ -135,7 +135,6 @@ bunch = ParticleBunch(w, x, y, z, ux, uy, uz, name="bunch")
 r_max = w_0 * 4  # Maximum radial extent of the box
 r_max_plasma = w_0 * 3  # Maximum radial extent of the plasma.
 l_box = 200e-6  # Length of simulation box
-# make sure initialize the bunch with a distance to the driver, or change this number
 xi_max = xi_0 + 45e-6  # Right edge of the box in the speed-of-light frame
 xi_min = xi_max - l_box  # Left edge of the box in the speed-of-light frame
 res_beam_r = 5.  # default: 5, resolution we want for the beam radius
