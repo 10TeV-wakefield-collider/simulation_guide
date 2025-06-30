@@ -21,21 +21,12 @@ matched_channel_waist = 40.e-6 # determined empirically for best laser guiding
 # matched_channel_waist should be equal to w_0 for low a0, but differs for high a0 due to relativistic guiding
 rel_delta_n_over_w2 = 1.0 / (np.pi * r_e * matched_channel_waist ** 4 * n_p0)
 
-# Density function.
+# Density function:
+# A simple constant plasma density with a parabolic radial profile.
 def density_profile(z, r):
     """ Define plasma density as a function of ``z`` and ``r``. """
     # Allocate relative density array.
-    n = np.zeros_like(z)
-    # Add plateau.
-    n = np.where(
-        (z >= 0) & (z <= l_plateau),
-        1, n
-    )
-    # Return absolute density.
-    n = n * n_p0
-    # Add minimal density value everywhere where it is zero, so we avoid crashes
-    # Date: 2024-01-10, recommended by Angel Ferran-Pousa
-    n = np.where(n <= 1e10, 1e10, n)
+    n = n_p0 * np.ones_like(z)
     # Add radial parabolic profile
     n = n * (1. + rel_delta_n_over_w2 * r**2)
     return n
