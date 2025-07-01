@@ -14,6 +14,7 @@ laser = GaussianPulse(xi_c=xi_0, a_0=a_0, w_0=w_0, l_0=lambda_L, tau=tau_fwhm)
 # Plasma density profile
 # ----------------------
 n_p0 = 1.7e23 # On-axis density in the plasma channel (m^-3)
+kp = np.sqrt(n_p0 * sc.e**2 / (sc.epsilon_0 * sc.m_e * sc.c**2))  # plasma wavenumber
 l_plateau = 28.e-2 # (m)
 # Determine guiding channel.
 r_e = sc.e**2 / (4.0 * np.pi * sc.epsilon_0 * sc.m_e * sc.c**2)
@@ -38,11 +39,12 @@ ene_sp = 0.1  # energy spread in %
 n_emitt_x = 1e-6
 n_emitt_y = 1e-6
 
-# Energy values and corresponding beta function values from calculations and measurements
-#   (previous optimization at 1 fC charge)
-energies_GeV = np.array([1,10,100,1e3,1e4])  # initial beam energy
-betas_opt = np.array([9.330e-4, 2.775e-3, 7.746e-6, 1.721e-2, 3.644e-2])  # measured in optimization study
-i = 0  # chooses the beam energy (1 GeV for i = 0) and beta values from above
+kin_energy_GeV = 1.0  # initial beam kinetic energy
+mc2_GeV = sc.m_e * sc.c**2 / sc.electron_volt / 1e9
+gamma_beam = 1 + kin_energy_GeV / mc2_GeV
+betax0 = np.sqrt(2 * gamma_beam) / kp  # matched beta for a perfect blowout
+sx0 = np.sqrt(n_emitt_x * betax0 / gamma_beam)  # matched beam size (rms)
+sy0 = np.sqrt(n_emitt_y * betax0 / gamma_beam)  # matched beam size (rms)
 
 # Best values from the case of 086_APOSSMM..
 l_beam = 5.453219e-6  # beam length (m)
@@ -56,6 +58,8 @@ sz_beam = 1e-7  # gaussian flank size
 i_avg = q_tot / l_beam * sc.c  # average beam current (for rectangle profile)
 i1_beam = 2 * beam_i_r1 * i_avg
 i2_beam = 2 * beam_i_r2 * i_avg
+
+n_part = 50000
 
 # Fix random seed for reproducibility
 np.random.seed(0)
@@ -101,15 +105,6 @@ def trapezoidal_bunch( i0, i1, n_part, gamma0, s_g, length, s_z, emit_x, s_x, em
 
     return x, y, z, ux, uy, uz, q
 
-def gamma_from_GeV(m_species,E_kin_GeV):
-    E_rest_GeV = m_species * sc.c**2 / sc.electron_volt / 1e9
-    return 1 + E_kin_GeV / E_rest_GeV
-
-n_part = 50000
-gamma_beam = gamma_from_GeV(m_species=sc.electron_mass, E_kin_GeV=energies_GeV[i])  # calculate beam gamma
-betax0 = betas_opt[i]
-sx0 = np.sqrt(n_emitt_x * betax0 / gamma_beam)  # matched beam size (rms)
-sy0 = np.sqrt(n_emitt_y * betax0 / gamma_beam)  # matched beam size (rms)
 
 # Generate bunch particles
 x, y, z, ux, uy, uz, q = trapezoidal_bunch(
@@ -139,16 +134,7 @@ xi_max = xi_0 + 45e-6  # Right edge of the box in the speed-of-light frame
 xi_min = xi_max - l_box  # Left edge of the box in the speed-of-light frame
 res_beam_r = 5.  # default: 5, resolution we want for the beam radius
 dr = np.min([sx0,sy0]) / res_beam_r  # make the radial resolution depend on the RMS beam size to avoid artifacts
-
-def calculate_critical_density(wavelength):
-    """Calculate the critical density for a given laser wavelength."""
-    omega_L = 2 * np.pi * sc.c / wavelength
-    return sc.m_e * sc.epsilon_0 * omega_L**2 / sc.elementary_charge**2
-
-n_e_n_c = n_p0 / calculate_critical_density(wavelength=lambda_L)
-kp = 2 * np.pi * np.sqrt(n_e_n_c) / lambda_L
-kpdz_inv = 40 # 1 / (kp * dz), resolution parameter where typically 20 - 40 is good
-dz = 1 / kpdz_inv / kp
+dz = 1 / kp / 40
 nr = int(r_max / dr)
 nz = int(l_box / dz)
 
@@ -157,6 +143,7 @@ plasma_plateau = PlasmaStage(
     length=l_plateau,
     density=density_profile,
     wakefield_model="quasistatic_2d",
+    ion_motion=True,
     n_out=50,
     laser=laser,
     laser_evolution=True,
