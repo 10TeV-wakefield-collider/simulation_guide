@@ -39,7 +39,7 @@ ene_sp = 0.1  # energy spread in %
 n_emitt_x = 1e-6
 n_emitt_y = 1e-6
 
-kin_energy_GeV = 1.0  # initial beam kinetic energy
+kin_energy_GeV = 100.0  # initial beam kinetic energy
 mc2_GeV = sc.m_e * sc.c**2 / sc.electron_volt / 1e9
 gamma_beam = 1 + kin_energy_GeV / mc2_GeV
 betax0 = np.sqrt(2 * gamma_beam) / kp  # matched beta for a perfect blowout
@@ -132,11 +132,15 @@ r_max_plasma = w_0 * 3  # Maximum radial extent of the plasma.
 l_box = 200e-6  # Length of simulation box
 xi_max = xi_0 + 45e-6  # Right edge of the box in the speed-of-light frame
 xi_min = xi_max - l_box  # Left edge of the box in the speed-of-light frame
-res_beam_r = 5.  # default: 5, resolution we want for the beam radius
-dr = np.min([sx0,sy0]) / res_beam_r  # make the radial resolution depend on the RMS beam size to avoid artifacts
 dz = 1 / kp / 40
-nr = int(r_max / dr)
 nz = int(l_box / dz)
+dr = 1 / kp / 20
+nr = int(r_max / dr)
+
+res_beam_r = 5.  # default: 5, resolution we want for the beam radius
+dr_beam = np.min([sx0, sy0]) / res_beam_r  # make the radial resolution depend on the RMS beam size to avoid artifacts
+adaptive_grid_r_max = 4 * np.max([sx0, sy0])
+adaptive_grid_nr = int(adaptive_grid_r_max / dr_beam)
 
 # Create plasma stages.
 plasma_plateau = PlasmaStage(
@@ -160,6 +164,10 @@ plasma_plateau = PlasmaStage(
     laser_envelope_nxi=nz * 4,
     max_gamma=25,
     field_diags=["rho", "E", "a"],
+    use_adaptive_grids=True,
+    adaptive_grid_r_max=adaptive_grid_r_max,
+    adaptive_grid_nr=adaptive_grid_nr,
+    adaptive_grid_diags=["E", "B"],
 )
 
 if __name__ == "__main__":
