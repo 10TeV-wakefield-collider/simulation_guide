@@ -156,11 +156,11 @@ dr = 1 / kp / 20
 nr = int(r_max / dr)
 
 # Adaptive grid setup
-res_beam_r = 5.  # default: 5, resolution we want for the beam radius
-adaptive_dr = np.min([sx0, sy0]) / res_beam_r  # make the radial resolution depend on the RMS beam size to avoid artifacts
+res_beam_r = 5.  # Beam radial resolution: number of grid points per sigma
+adaptive_dr = np.min([sx0, sy0]) / res_beam_r
 adaptive_grid_r_max = 4 * np.max([sx0, sy0])
 adaptive_grid_nr = int(adaptive_grid_r_max / adaptive_dr)
-# add more particles in the adaptive grid region
+# add more particles in the adaptive grid region to match the increased resolution
 ppc = 2
 ppc = [[adaptive_grid_r_max, ppc * int(dr / adaptive_dr)],
        [r_max_plasma, ppc]]
