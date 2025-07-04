@@ -38,15 +38,15 @@ def density_profile(z, r):
 a_0 = 2.36
 w_0 = 36e-6
 tau_fwhm = 7.33841e-14 * np.sqrt(2.0 * np.log(2))  # FWHM in intensity
-xi_0 = 0  # Center of the drive laser pulse
+xi_c = 0  # Center of the drive laser pulse
 lambda_L = 0.8e-6  # laser wavelength (m)
-laser = GaussianPulse(xi_c=xi_0, a_0=a_0, w_0=w_0,
+laser = GaussianPulse(xi_c=xi_c, a_0=a_0, w_0=w_0,
                       l_0=lambda_L, tau=tau_fwhm,
                       z_foc=l_ramp)
 
 # Witness beam setup
 # ------------------
-q_tot = 196 * 1e-12  # total charge (C)
+q_tot = 196e-12  # total charge (not counting the gaussian flanks)
 ene_sp = 0.1  # energy spread in %
 n_emitt_x = 1e-6
 n_emitt_y = 1e-6
@@ -60,16 +60,13 @@ sy0 = np.sqrt(n_emitt_y * betax0 / gamma_beam)  # matched beam size (rms)
 
 # Best values from the case of 086_APOSSMM..
 l_beam = 5.453219e-6  # beam length (m)
-beam_z_i_2 = 2.973740
-z_beam = (60 + beam_z_i_2) * 1e-6  # distance of the beam center to the drive laser pulse
-# beam currents are coupled due to total charge
-beam_i_r2 = 0.469660
-beam_i_r1 = 1.0 - beam_i_r2
-sz_beam = 1e-7  # gaussian flank size
-# we keep the beam charge almost constant (just not accounting for the gaussian flanks yet)
-i_avg = q_tot / l_beam * sc.c  # average beam current (for rectangle profile)
-i1_beam = 2 * beam_i_r1 * i_avg
-i2_beam = 2 * beam_i_r2 * i_avg
+sz_beam = 1e-7  # gaussian flank sigma
+d_beam = 62.973740e-6  # distance from the drive laser center to the beam front
+i_r1 = 1.0 - 0.469660  # frontal current (relative)
+i_r0 = 1.0 - i_r1  # rear current (relative)
+i_avg = 2 * q_tot * sc.c / l_beam  # average beam current
+i1_beam = i_r1 * i_avg  # frontal current (A)
+i0_beam = i_r0 * i_avg  # rear current (A)
 
 n_part = 50000
 
@@ -92,7 +89,10 @@ def trapezoidal_bunch( i0, i1, n_part, gamma0, s_g, length, s_z, emit_x, s_x, em
     n_gaus1 = int(n_part * q_gaus1 / q_tot)
 
     z_plat = np.random.uniform(0.0, length, n_plat)
-    z_triag = np.random.triangular(0.0, length, length, n_triag)
+    if i0 <= i1:
+        z_triag = np.random.triangular(0., length, length, n_triag)
+    else:
+        z_triag = np.random.triangular(0., 0., length, n_triag)
     z_gaus0 = s_z * np.random.standard_normal(2 * n_gaus0)
     z_gaus1 = s_z * np.random.standard_normal(2 * n_gaus1)
 
@@ -117,11 +117,10 @@ def trapezoidal_bunch( i0, i1, n_part, gamma0, s_g, length, s_z, emit_x, s_x, em
 
     return x, y, z, ux, uy, uz, q
 
-
 # Generate bunch particles
 x, y, z, ux, uy, uz, q = trapezoidal_bunch(
+    i0_beam,
     i1_beam,
-    i2_beam,
     n_part=n_part,
     gamma0=gamma_beam,
     s_g=ene_sp * gamma_beam / 100,
@@ -132,7 +131,14 @@ x, y, z, ux, uy, uz, q = trapezoidal_bunch(
     emit_y=n_emitt_y,
     s_y=sy0,
 )
-z -= l_beam / 2 + z_beam  # shift the longitudinal beam position away from the driver
+zc = xi_c - d_beam - l_beam / 2  # center position of the beam
+zf = l_ramp  # beam focus position 
+ctf = zf - zc  # distance to the focal plane
+# backpropagate the beam balistically from the focal plane to the start of the simulation
+gamma = np.sqrt(1 + ux**2 + uy**2 + uz**2)
+z = z + zf - uz * ctf / gamma
+x = x - ux * ctf / gamma
+y = y - uy * ctf / gamma
 w = np.abs(q / sc.e)
 bunch = ParticleBunch(w, x, y, z, ux, uy, uz, name="bunch")
 
@@ -142,7 +148,7 @@ bunch = ParticleBunch(w, x, y, z, ux, uy, uz, name="bunch")
 r_max = w_0 * 4  # Maximum radial extent of the box
 r_max_plasma = w_0 * 3  # Maximum radial extent of the plasma.
 l_box = 200e-6  # Length of simulation box
-xi_max = xi_0 + 45e-6  # Right edge of the box in the speed-of-light frame
+xi_max = xi_c + 45e-6  # Right edge of the box in the speed-of-light frame
 xi_min = xi_max - l_box  # Left edge of the box in the speed-of-light frame
 dz = 1 / kp / 40
 nz = int(l_box / dz)
