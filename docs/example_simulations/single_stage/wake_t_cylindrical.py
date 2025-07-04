@@ -2,20 +2,12 @@ import numpy as np
 import scipy.constants as sc
 from wake_t import ParticleBunch, GaussianPulse, PlasmaStage, Beamline
 
-# Laser setup
-# -----------
-a_0 = 2.36
-w_0 = 36e-6
-tau_fwhm = 7.33841e-14 * np.sqrt(2.0 * np.log(2))  # FWHM in intensity
-xi_0 = 0  # Center of the drive laser pulse
-lambda_L = 0.8e-6  # laser wavelength (m)
-laser = GaussianPulse(xi_c=xi_0, a_0=a_0, w_0=w_0, l_0=lambda_L, tau=tau_fwhm)
-
 # Plasma density profile
 # ----------------------
 n_p0 = 1.7e23 # On-axis density in the plasma channel (m^-3)
 kp = np.sqrt(n_p0 * sc.e**2 / (sc.epsilon_0 * sc.m_e * sc.c**2))  # plasma wavenumber
 l_plateau = 28.e-2 # (m)
+l_ramp = 1e-3
 # Determine guiding channel.
 r_e = sc.e**2 / (4.0 * np.pi * sc.epsilon_0 * sc.m_e * sc.c**2)
 matched_channel_waist = 40.e-6 # determined empirically for best laser guiding
@@ -28,9 +20,29 @@ def density_profile(z, r):
     """ Define plasma density as a function of ``z`` and ``r``. """
     # Allocate density array.
     n = n_p0 * np.ones_like(z)
+    # Up ramp
+    n = np.where((z>0.0) & (z<=l_ramp), 
+                 0.5 * (1 - np.cos(np.pi * z / l_ramp)) * n, n)
+    # Down ramp
+    z0 = l_ramp + l_plateau
+    n = np.where((z>=z0) & (z<z0 + l_ramp), 
+                 (1 - 0.5 * (1 - np.cos(np.pi * (z - z0) / l_ramp))) * n, n)
+    # Set to zero outside the plasma
+    n = np.where((z<=0.0) | (z >= z0 + l_ramp), 1e-10 * n_p0, n)
     # Add radial parabolic profile
     n = n * (1. + rel_delta_n_over_w2 * r**2)
     return n
+
+# Laser setup
+# -----------
+a_0 = 2.36
+w_0 = 36e-6
+tau_fwhm = 7.33841e-14 * np.sqrt(2.0 * np.log(2))  # FWHM in intensity
+xi_0 = 0  # Center of the drive laser pulse
+lambda_L = 0.8e-6  # laser wavelength (m)
+laser = GaussianPulse(xi_c=xi_0, a_0=a_0, w_0=w_0,
+                      l_0=lambda_L, tau=tau_fwhm,
+                      z_foc=l_ramp)
 
 # Witness beam setup
 # ------------------
@@ -137,10 +149,15 @@ nz = int(l_box / dz)
 dr = 1 / kp / 20
 nr = int(r_max / dr)
 
+# Adaptive grid setup
 res_beam_r = 5.  # default: 5, resolution we want for the beam radius
-dr_beam = np.min([sx0, sy0]) / res_beam_r  # make the radial resolution depend on the RMS beam size to avoid artifacts
+adaptive_dr = np.min([sx0, sy0]) / res_beam_r  # make the radial resolution depend on the RMS beam size to avoid artifacts
 adaptive_grid_r_max = 4 * np.max([sx0, sy0])
-adaptive_grid_nr = int(adaptive_grid_r_max / dr_beam)
+adaptive_grid_nr = int(adaptive_grid_r_max / adaptive_dr)
+# add more particles in the adaptive grid region
+ppc = 2
+ppc = [[adaptive_grid_r_max, ppc * int(dr / adaptive_dr)],
+       [r_max_plasma, ppc]]
 
 # Create plasma stages.
 plasma_plateau = PlasmaStage(
@@ -158,12 +175,11 @@ plasma_plateau = PlasmaStage(
     n_r=nr,
     n_xi=nz,
     dz_fields= 1 * l_box,
-    ppc=2,
-    # parabolic_coefficient=rel_delta_n_over_w2,  # deprecated: use density_profile instead
+    ppc=ppc,
     laser_envelope_substeps=4,
     laser_envelope_nxi=nz * 4,
-    max_gamma=25,
-    field_diags=["rho", "E", "a"],
+    max_gamma=10,
+    field_diags=["rho", "E", "B", "a"],
     use_adaptive_grids=True,
     adaptive_grid_r_max=adaptive_grid_r_max,
     adaptive_grid_nr=adaptive_grid_nr,
