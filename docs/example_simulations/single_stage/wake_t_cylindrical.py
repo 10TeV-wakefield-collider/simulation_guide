@@ -6,8 +6,9 @@ from wake_t import ParticleBunch, GaussianPulse, PlasmaStage, Beamline
 # ----------------------
 n_p0 = 1.7e23 # On-axis density in the plasma channel (m^-3)
 kp = np.sqrt(n_p0 * sc.e**2 / (sc.epsilon_0 * sc.m_e * sc.c**2))  # plasma wavenumber
-l_plateau = 28.e-2 # (m)
+l_plateau = 28e-2 # (m)
 l_ramp = 1e-3
+l_total = l_plateau + 2 * l_ramp
 # Determine guiding channel.
 r_e = sc.e**2 / (4.0 * np.pi * sc.epsilon_0 * sc.m_e * sc.c**2)
 matched_channel_waist = 40.e-6 # determined empirically for best laser guiding
@@ -21,14 +22,16 @@ def density_profile(z, r):
     # Allocate density array.
     n = n_p0 * np.ones_like(z)
     # Up ramp
-    n = np.where((z>0.0) & (z<=l_ramp), 
+    n = np.where((z >= 0.0) & (z <= l_ramp), 
                  0.5 * (1 - np.cos(np.pi * z / l_ramp)) * n, n)
     # Down ramp
     z0 = l_ramp + l_plateau
-    n = np.where((z>=z0) & (z<z0 + l_ramp), 
+    n = np.where((z >= z0) & (z <= z0 + l_ramp), 
                  (1 - 0.5 * (1 - np.cos(np.pi * (z - z0) / l_ramp))) * n, n)
     # Set to zero outside the plasma
-    n = np.where((z<=0.0) | (z >= z0 + l_ramp), 1e-10 * n_p0, n)
+    n = np.where(z <= 0.0, 1e-10 * n_p0, n)
+    n = np.where(z >= z0 + l_ramp, 1e-10 * n_p0, n)
+    n = np.where(n == 0, 1e-10 * n_p0, n)  # fix having zero in the last point
     # Add radial parabolic profile
     n = n * (1. + rel_delta_n_over_w2 * r**2)
     return n
@@ -154,20 +157,23 @@ dz = 1 / kp / 40
 nz = int(l_box / dz)
 dr = 1 / kp / 20
 nr = int(r_max / dr)
+dz_fields = 200e-6  # wakefield calculation period
 
 # Adaptive grid setup
 res_beam_r = 5.  # Beam radial resolution: number of grid points per sigma
 adaptive_dr = np.min([sx0, sy0]) / res_beam_r
-adaptive_grid_r_max = 4 * np.max([sx0, sy0])
+sxi = np.std(x)  # initial beam rms size in x
+syi = np.std(y)  # initial beam rms size in y
+adaptive_grid_r_max = 4 * np.max([sxi, syi])
 adaptive_grid_nr = int(adaptive_grid_r_max / adaptive_dr)
 # add more particles in the adaptive grid region to match the increased resolution
 ppc = 2
 ppc = [[adaptive_grid_r_max, ppc * int(dr / adaptive_dr)],
        [r_max_plasma, ppc]]
 
-# Create plasma stages.
+# Create plasma stage
 plasma_plateau = PlasmaStage(
-    length=l_plateau,
+    length=l_total,
     density=density_profile,
     wakefield_model="quasistatic_2d",
     ion_motion=True,
@@ -180,11 +186,11 @@ plasma_plateau = PlasmaStage(
     xi_max=xi_max,
     n_r=nr,
     n_xi=nz,
-    dz_fields= 1 * l_box,
+    dz_fields= dz_fields,
     ppc=ppc,
     laser_envelope_substeps=4,
     laser_envelope_nxi=nz * 4,
-    max_gamma=10,
+    max_gamma=25,
     field_diags=["rho", "E", "B", "a"],
     use_adaptive_grids=True,
     adaptive_grid_r_max=adaptive_grid_r_max,
