@@ -6,8 +6,8 @@ from wake_t import ParticleBunch, GaussianPulse, PlasmaStage, Beamline
 # ----------------------
 n_p0 = 1.7e23 # On-axis density in the plasma channel (m^-3)
 kp = np.sqrt(n_p0 * sc.e**2 / (sc.epsilon_0 * sc.m_e * sc.c**2))  # plasma wavenumber
-l_plateau = 28e-2 # (m)
-l_ramp = 1e-3
+l_plateau = 28e-2  # plateau length
+l_ramp = 1e-3  # ramp length
 l_total = l_plateau + 2 * l_ramp
 # Determine guiding channel.
 r_e = sc.e**2 / (4.0 * np.pi * sc.epsilon_0 * sc.m_e * sc.c**2)
@@ -16,7 +16,7 @@ matched_channel_waist = 40.e-6 # determined empirically for best laser guiding
 rel_delta_n_over_w2 = 1.0 / (np.pi * r_e * matched_channel_waist ** 4 * n_p0)
 
 # Density function:
-# A simple constant plasma density with a parabolic radial profile.
+# A simple flat-top plasma density region with cosine ramps and a parabolic radial profile.
 def density_profile(z, r):
     """ Define plasma density as a function of ``z`` and ``r``. """
     # Allocate density array.
@@ -28,7 +28,7 @@ def density_profile(z, r):
     z0 = l_ramp + l_plateau
     n = np.where((z >= z0) & (z <= z0 + l_ramp), 
                  (1 - 0.5 * (1 - np.cos(np.pi * (z - z0) / l_ramp))) * n, n)
-    # Set to zero outside the plasma
+    # Set to a very small, non-zero value outside the plasma border
     n = np.where(z <= 0.0, 1e-10 * n_p0, n)
     n = np.where(z >= z0 + l_ramp, 1e-10 * n_p0, n)
     n = np.where(n == 0, 1e-10 * n_p0, n)  # fix having zero in the last point
@@ -51,8 +51,8 @@ laser = GaussianPulse(xi_c=xi_c, a_0=a_0, w_0=w_0,
 # ------------------
 q_tot = 196e-12  # total charge (not counting the gaussian flanks)
 ene_sp = 0.1  # energy spread in %
-n_emitt_x = 1e-6
-n_emitt_y = 1e-6
+n_emitt_x = 0.1e-6
+n_emitt_y = 0.1e-6
 
 kin_energy_GeV = 100.0  # initial beam kinetic energy
 mc2_GeV = sc.m_e * sc.c**2 / sc.electron_volt / 1e9
@@ -65,11 +65,11 @@ sy0 = np.sqrt(n_emitt_y * betax0 / gamma_beam)  # matched beam size (rms)
 l_beam = 5.453219e-6  # beam length (m)
 sz_beam = 1e-7  # gaussian flank sigma
 d_beam = 62.973740e-6  # distance from the drive laser center to the beam front
-i_r1 = 1.0 - 0.469660  # frontal current (relative)
+i_r1 = 0.53034  # frontal current (relative)
 i_r0 = 1.0 - i_r1  # rear current (relative)
-i_avg = 2 * q_tot * sc.c / l_beam  # average beam current
-i1_beam = i_r1 * i_avg  # frontal current (A)
-i0_beam = i_r0 * i_avg  # rear current (A)
+i_avg = q_tot * sc.c / l_beam  # average beam current
+i1_beam = 2 * i_r1 * i_avg  # frontal current (A)
+i0_beam = 2 * i_r0 * i_avg  # rear current (A)
 
 n_part = 50000
 
@@ -167,8 +167,9 @@ syi = np.std(y)  # initial beam rms size in y
 adaptive_grid_r_max = 4 * np.max([sxi, syi])
 adaptive_grid_nr = int(adaptive_grid_r_max / adaptive_dr)
 # add more particles in the adaptive grid region to match the increased resolution
+# Extends the region with more particles a bit beyond the adaptive grid border
 ppc = 2
-ppc = [[adaptive_grid_r_max, ppc * int(dr / adaptive_dr)],
+ppc = [[1.5 * adaptive_grid_r_max, ppc * int(dr / adaptive_dr)],
        [r_max_plasma, ppc]]
 
 # Create plasma stage
