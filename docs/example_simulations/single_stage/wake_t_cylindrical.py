@@ -28,7 +28,7 @@ def density_profile(z, r):
     z0 = l_ramp + l_plateau
     n = np.where((z >= z0) & (z <= z0 + l_ramp), 
                  (1 - 0.5 * (1 - np.cos(np.pi * (z - z0) / l_ramp))) * n, n)
-    # Set to a very small, non-zero value outside the plasma border
+    # Set to a very small, non-zero value outside the plasma borders to avoid divide by zero
     n = np.where(z <= 0.0, 1e-10 * n_p0, n)
     n = np.where(z >= z0 + l_ramp, 1e-10 * n_p0, n)
     n = np.where(n == 0, 1e-10 * n_p0, n)  # fix having zero in the last point
@@ -160,14 +160,14 @@ nr = int(r_max / dr)
 dz_fields = 200e-6  # wakefield calculation period
 
 # Adaptive grid setup
-res_beam_r = 5.  # Beam radial resolution: number of grid points per sigma
+res_beam_r = 10.  # Beam radial resolution: number of grid points per sigma
 adaptive_dr = np.min([sx0, sy0]) / res_beam_r
 sxi = np.std(x)  # initial beam rms size in x
 syi = np.std(y)  # initial beam rms size in y
 adaptive_grid_r_max = 4 * np.max([sxi, syi])
 adaptive_grid_nr = int(adaptive_grid_r_max / adaptive_dr)
 # add more particles in the adaptive grid region to match the increased resolution
-# Extends the region with more particles a bit beyond the adaptive grid border
+# Extends the region with more particles beyond the adaptive grid borders
 ppc = 2
 ppc = [[1.5 * adaptive_grid_r_max, ppc * int(dr / adaptive_dr)],
        [r_max_plasma, ppc]]
