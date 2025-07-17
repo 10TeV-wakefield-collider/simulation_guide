@@ -31,8 +31,9 @@ Installation
 Wake-T is open-source, and available on `Github <https://github.com/AngelFP/Wake-T>`_
 and `PyPI <https://pypi.org/project/Wake-T/>`_.
 
-Instructions for installing Wake-T can be found
-`here <https://wake-t.readthedocs.io/en/latest/getting_started/installation.html>`_.
+Wake-T can be installed with::
+
+   pip install git+https://github.com/AngelFP/Wake-T.git
 
 Simulation script
 -----------------
@@ -42,7 +43,7 @@ run it in your terminal by typing::
 
    python wake_t_cylindrical.py
 
-The script takes about 12 minutes to run on a single CPU core, and is numerically converged.
+The script takes about 3 minutes to run on a single CPU core, and is numerically converged.
 
 .. literalinclude:: wake_t_cylindrical.py
    :language: python
