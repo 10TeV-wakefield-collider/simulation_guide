@@ -11,7 +11,7 @@ Overview
 --------
 
 This example showcases the hosing instability in a two-bunch, single-stage PWFA with transverse offsets.
-In this example, a narrow 3 nC drive bunch excites a plasma wakefield in the nonlinear blowout regime. A 1 nC trailing bunch behind the driver is initially offset transversely by 2 microns and undergoes hosing as the slice centroid oscillations grow. Both beams tri-gaussian and the plasma density profile is longitudinally and transversely uniform. Some additional features of this example include:
+In this example, a narrow 3 nC drive bunch excites a plasma wakefield in the nonlinear blowout regime. A 1 nC trailing bunch behind the driver is initially offset transversely by 2 microns and undergoes hosing as the slice centroid oscillations grow. Both beams are tri-gaussian and the plasma density profile is longitudinally and transversely uniform. Some additional features of this example include:
 
 - **Beam loading**: The witness bunch is positioned at the appropriate phase of the wake (~ 300 um behind the driver) so that it flattens the accelerating field near the beam center. This helps preserve the energy spread of the witness bunch.
 
@@ -38,12 +38,12 @@ QPAD is open-source, and available on `Github <https://github.com/UCLA-Plasma-Si
 
 
 Installation instructions for QPAD are available 
-`here <https://github.com/UCLA-Plasma-Simulation-Group/QPAD/blob/main/docs/legacy_src/Install-QPAD.md>`__. A conda-forge package for QPAD is currently in the works and is expected soon.
+`here <https://github.com/UCLA-Plasma-Simulation-Group/QPAD/blob/main/docs/legacy_src/Install-QPAD.md>`__. 
 
 Simulation script
 -----------------
 
-You can download the required files by clicking on :download:`this link <qpad_q3d.zip>`. Unzip the folder and cd into it. Run the simulation script in terminal by typing::
+You can download the required files by clicking on :download:`hosing_sim_qpad.py <qpad_q3d/hosing_sim_qpad.py>` and :download:`picmi_qpad.py <qpad_q3d/picmi_qpad.py>`. Store these files in a folder where you want to run your simulation and cd into it. Run the simulation script in terminal by typing::
 
    python hosing_sim_qpad.py
 
@@ -53,7 +53,7 @@ The script takes about 10 minutes to run on 16 CPU cores.
    :language: python
 
 .. warning:: 
-   Make sure to modify the path to your qpad executable 
+   Make sure to modify the path to your qpad executable in the above script.
     .. code-block:: python
 
       path_to_exe = ''   # <---- specify path to executable here
