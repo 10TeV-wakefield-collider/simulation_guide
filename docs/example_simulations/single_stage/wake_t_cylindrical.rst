@@ -20,9 +20,10 @@ The electron beam profile is transversally Gaussian and longitudinally trapezoid
 - The trapezoidal beam profile has been tuned so as to **optimize beamloading**, i.e. ensure that each longitudinal
   slice of the beam gains the same amount of energy over the length of the plasma stage, to avoid large energy spread.
 
-.. warning::
-
-   Is ion motion turned on by defauld in the latest version of Wake-T? It is not clear from the documentation.
+- The space-charge field of the tight electron beam can drive significant motion of the plasma ions, which in
+  turn affects the focusing of the electron beam. This process happens on very small transverse scales (on the
+  order of the radius of the accelerated beam). To resolve this effect, an adaptive grid is used close to the
+  accelerated beam.
 
 Installation
 ------------
