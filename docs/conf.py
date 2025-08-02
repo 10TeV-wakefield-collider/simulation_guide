@@ -12,6 +12,11 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.mathjax',
+    'sphinx_togglebutton',
+    'sphinx_design',
+    'sphinx_copybutton',
+    'nbsphinx',
 ]
 
 templates_path = ['_templates']
@@ -26,3 +31,10 @@ html_logo = 'images/logo.png'
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
 }
+
+nbsphinx_execute = 'never'
+
+# Configure copy button
+copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = False
