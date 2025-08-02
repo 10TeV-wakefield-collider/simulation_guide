@@ -1,0 +1,17 @@
+name: simulation-docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - pip
+  - pip:
+    - sphinx>=4.0.0
+    - sphinx-rtd-theme>=0.5.0
+    - sphinx-autodoc-typehints>=1.12.0
+    - sphinx-togglebutton
+    - sphinx-design
+    - sphinx-copybutton-0.5.2
+    - nbsphinx
+    - ipykernel
+  - pandoc
