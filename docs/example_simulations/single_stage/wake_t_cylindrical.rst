@@ -20,9 +20,10 @@ The electron beam profile is transversally Gaussian and longitudinally trapezoid
 - The trapezoidal beam profile has been tuned so as to **optimize beamloading**, i.e. ensure that each longitudinal
   slice of the beam gains the same amount of energy over the length of the plasma stage, to avoid large energy spread.
 
-.. warning::
-
-   Is ion motion turned on by defauld in the latest version of Wake-T? It is not clear from the documentation.
+- The space-charge field of the tight electron beam can drive significant motion of the plasma ions, which in
+  turn affects the focusing of the electron beam. This process happens on very small transverse scales (on the
+  order of the radius of the accelerated beam). To resolve this effect, an adaptive grid is used close to the
+  accelerated beam.
 
 Installation
 ------------
@@ -30,8 +31,9 @@ Installation
 Wake-T is open-source, and available on `Github <https://github.com/AngelFP/Wake-T>`_
 and `PyPI <https://pypi.org/project/Wake-T/>`_.
 
-Instructions for installing Wake-T can be found
-`here <https://wake-t.readthedocs.io/en/latest/getting_started/installation.html>`_.
+Wake-T can be installed with::
+
+   pip install git+https://github.com/AngelFP/Wake-T.git
 
 Simulation script
 -----------------
@@ -41,7 +43,7 @@ run it in your terminal by typing::
 
    python wake_t_cylindrical.py
 
-The script takes about 12 minutes to run on a single CPU core, and is numerically converged.
+The script takes about 3 minutes to run on a single CPU core, and is numerically converged.
 
 .. literalinclude:: wake_t_cylindrical.py
    :language: python
