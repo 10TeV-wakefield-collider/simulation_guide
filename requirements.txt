@@ -1,0 +1,8 @@
+sphinx
+sphinx-rtd-theme
+sphinx-autodoc-typehints
+sphinx-togglebutton
+sphinx-design
+sphinx-copybutton
+nbsphinx
+ipykernel
