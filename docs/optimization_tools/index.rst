@@ -9,5 +9,11 @@ This section discusses some of the available tools for this purpose.
    This section is in-progress.
    Please `contribute here <https://github.com/10TeV-wakefield-collider/simulation_guide>`__.
 
+   Simulation optimization frameworks:
+
    * [optimas](https://optimas.readthedocs.io)
    * [xopt](https://xopt.xopt.org)
+
+   Start-to-end optimization frameworks:
+
+   * [ABEL](https://github.com/abel-framework/ABEL)
