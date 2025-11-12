@@ -11,9 +11,9 @@ This section discusses some of the available tools for this purpose.
 
    Simulation optimization frameworks:
 
-   * [optimas](https://optimas.readthedocs.io)
-   * [xopt](https://xopt.xopt.org)
+   * `optimas <https://optimas.readthedocs.io>`__
+   * `xopt <https://xopt.xopt.org>`__
 
    Start-to-end optimization frameworks:
 
-   * [ABEL](https://github.com/abel-framework/ABEL)
+   * `ABEL <https://github.com/abel-framework/ABEL>`__
