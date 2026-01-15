@@ -1,0 +1,135 @@
+my_constants.ne = 1.7e23
+my_constants.kp = sqrt(ne * q_e^2  / (epsilon0 * m_e)) / clight
+
+my_constants.l_plateau = 28e-2
+my_constants.l_ramp = 1e-3
+my_constants.z_end = l_ramp + l_plateau
+my_constants.l_total = l_plateau + 2*l_ramp
+my_constants.Rm = 40.e-6 # matched channel waist
+my_constants.w0 = 36.e-6
+
+hipace.depos_order_xy = 2
+hipace.verbose = 3
+
+# Time
+
+hipace.max_time = l_total/clight
+hipace.dt = 20e-6/clight
+max_step = 100000
+
+# Geometry
+
+# 1023 has problems with plasmas.prevent_centered_particle = false or true
+amr.n_cell = 1024 1024 620
+boundary.field = Dirichlet
+boundary.particle = Periodic
+geometry.prob_lo = -4*w0 -4*w0 -140e-6
+geometry.prob_hi =  4*w0  4*w0 60e-6
+
+
+# Laser
+
+lasers.names = laser
+lasers.lambda0 = 800e-9
+lasers.solver_type = multigrid
+lasers.MG_tolerance_rel = 1e-5
+laser.a0 = 2.36
+laser.position_mean = 0. 0. 0.
+laser.w0 = w0
+laser.tau = 7.33841e-14 * sqrt(2.0 * log(2))
+
+# Plasma
+
+plasmas.names = elec ion
+plasmas.neutralize_background = false
+plasmas.prevent_centered_particle = true
+plasmas.reorder_period = 10
+
+elec.density(x,y,z) = "min(ne*(1 + 4*(x^2+y^2)/(kp^2*Rm^4) ) *
+                       if (z > l_ramp, 1,     0.5*(1-cos(pi*   z     /l_ramp))) *
+                       if (z < z_end , 1, 1 - 0.5*(1-cos(pi*(z-z_end)/l_ramp))) *
+                       if (z>0,1,0) * if (z<l_total,1,0), 6e23)"
+# elec.density(x,y,z) = ne
+elec.ppc = 1 1
+elec.element = electron
+
+ion.density(x,y,z) =  "min(ne*(1 + 4*(x^2+y^2)/(kp^2*Rm^4) ) *
+                       if (z > l_ramp, 1,     0.5*(1-cos(pi*   z     /l_ramp))) *
+                       if (z < z_end , 1, 1 - 0.5*(1-cos(pi*(z-z_end)/l_ramp))) *
+                       if (z>0,1,0) * if (z<l_total,1,0), 6e23)"
+# ion.density(x,y,z) = ne
+ion.ppc = 1 1
+ion.element = H
+ion.initial_ion_level = 1
+
+# Beams
+
+my_constants.emit = 0.1e-6
+my_constants.kin_energy_GeV = 100.0
+my_constants.mc2_GeV = m_e * clight**2 / q_e / 1e9
+my_constants.gamma = 1 + kin_energy_GeV / mc2_GeV
+my_constants.beta0 = sqrt(2 * gamma) / kp
+my_constants.beam_width = sqrt(emit * beta0 / gamma)
+my_constants.l_beam = 5.453219e-6
+my_constants.I_head = 0.53034
+my_constants.I_tail = 1.0-I_head
+my_constants.z_head = -62.973740e-6
+my_constants.z_tail = z_head - l_beam
+my_constants.taper = .1e-6
+
+beams.names = beam beamsub
+
+beam.injection_type = fixed_weight_pdf
+beam.num_particles = 1e7 # 1e3
+beam.total_charge = -196e-12
+# beam.pdf = "exp(-0.5*((z+1105e-6)/(42e-6))^2)"
+beam.pdf = " if(z_tail<z<z_head, I_head + (I_head-I_tail)*(z-z_head)/(z_head-z_tail), 0)
+            + if(z>=z_head, I_head*exp(-(z-z_head)**2/taper**2), 0)
+            + if(z<=z_tail, I_tail*exp(-(z-z_tail)**2/taper**2), 0)"
+beam.position_mean = 0 0
+beam.position_std = beam_width beam_width
+beam.u_mean = 0 0 gamma
+beam.u_std = emit/beam_width emit/beam_width gamma/1000.
+beam.element = electron
+beam.z_foc = l_ramp
+
+beamsub.injection_type = fixed_weight_pdf
+beamsub.num_particles = 1e4
+beamsub.total_charge = -196e-18
+beamsub.pdf = " if(z_tail<z<z_head, I_head + (I_head-I_tail)*(z-z_head)/(z_head-z_tail), 0)
+            + if(z>=z_head, I_head*exp(-(z-z_head)/taper), 0)
+            + if(z<=z_tail,I_tail*exp(+(z-z_tail)/taper), 0)"
+beamsub.position_mean = 0 0
+beamsub.position_std = beam_width beam_width
+beamsub.u_mean = 0 0 gamma
+beamsub.u_std = emit/beam_width emit/beam_width gamma/1000.
+beamsub.element = electron
+beamsub.z_foc = l_ramp
+
+# MR
+
+amr.max_level = 1
+mr_lev1.n_cell = 256 256
+mr_lev1.patch_lo = -16*beam_width -16*beam_width -70e-6 # approximately 4xbeam_width
+mr_lev1.patch_hi =  16*beam_width  16*beam_width -60e-6
+mr_lev1.ref_ratio = 35 35
+mr_lev1.plasma_fine_patch = 1.5 1.5
+
+# Diagnostic
+
+diagnostic.diag_type = xz
+diagnostic.output_period = 250
+diagnostic.beam_output_period = 250
+diagnostic.beam_data = beamsub
+hipace.deposit_rho = true
+hipace.deposit_rho_individual = true
+
+beams.insitu_period = 1
+plasmas.insitu_period = 1
+fields.insitu_period = 1
+lasers.insitu_period = 1
+
+# GPU
+
+comms_buffer.on_gpu = true
+hipace.do_device_synchronize = true
