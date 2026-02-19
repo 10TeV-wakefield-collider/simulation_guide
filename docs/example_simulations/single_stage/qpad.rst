@@ -34,11 +34,13 @@ In this example, a narrow 3 nC drive bunch excites a plasma wakefield in the non
 Installation
 ------------
 
-QPAD is open-source, and available on `Github <https://github.com/UCLA-Plasma-Simulation-Group/QPAD>`_
+QPAD can be installed through the online conda-forge package manager using the terminal command::
+
+   conda install -c conda-forge qpad
 
 
-Installation instructions for QPAD are available 
-`here <https://github.com/UCLA-Plasma-Simulation-Group/QPAD/blob/main/docs/legacy_src/Install-QPAD.md>`__. 
+QPAD is open-source, and available on `Github <https://github.com/UCLA-Plasma-Simulation-Group/QPAD>`_. Manual installation instructions for QPAD are also available
+`here <https://github.com/UCLA-Plasma-Simulation-Group/QPAD/blob/main/docs/legacy_src/Install-QPAD.md>`__ for more advanced users. 
 
 Simulation script
 -----------------
