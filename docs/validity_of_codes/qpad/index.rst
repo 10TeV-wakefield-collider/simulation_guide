@@ -1,13 +1,14 @@
 QPAD 
--------------------
+----
 
 
 Quasi-3D, Quasi-static Algorithm
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: qpad_images/logo.png
    :width: 35%
    :align: right
+   
 QPAD is a particle-in-cell (PIC) code that combines the quasi-3D algorithm and quasi-static approximation to efficiently model plasma-based accelerators. In the quasi-3D algorithm, the fields and source terms are decomposed into azimuthal Fourier modes using a cylindrical geometry:
 
 .. math::
@@ -64,7 +65,7 @@ Approximations
 
 
 Transverse Offsets and Hosing
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Due to its quasi-3D algorithm, QPAD can self-consistently model the hosing instability in a plasma wakefield accelerator with transverse misalignment between the driver and witness bunch.  For a witness bunch with a transverse offset :math:`x_0` w.r.t the driver, the density profile is given by:
 
@@ -97,7 +98,7 @@ Figure 2 shows the  dropoff in the azimuthal fourier mode contributions for a bi
 
 
 Flat Beams
-~~~~~~~~~~~~~~
+~~~~~~~~~~
 
 The quasi-3D algorithm also enables self-consistent modeling of flat beams and their effects on the plasma wake excitation. For a flat beam, the density profile is given by:
 
@@ -135,12 +136,12 @@ QPAD does not support capabilities for modeling self-injection due to its quasi-
 
 
 Betatron Losses
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 TBD
 
 Coulomb Collisions
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 QPAD does not support capabilities for modeling Coulomb Collisions.
 

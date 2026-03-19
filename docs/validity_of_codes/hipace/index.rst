@@ -1,11 +1,11 @@
 HiPACE++
-----------------------
+--------
 
 .. warning::
    This section is still in progress.
 
 3D Quasi-static Algorithm
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TBD
 
@@ -16,12 +16,12 @@ TBD
 
 
 Transverse Offsets and Hosing
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TBD
 
 Flat Beams
-~~~~~~~~~~~~~~
+~~~~~~~~~~
 
 TBD
 
@@ -33,12 +33,12 @@ TBD
 
 
 Betatron Losses
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 TBD
 
 Coulomb Collisions
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 TBD
 
