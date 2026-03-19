@@ -1,14 +1,28 @@
 Validity of the Different Codes
 ===============================
 
-.. warning::
 
-    This section is under construction.
 
-    This section will describe the domain of validity of the various codes:
+This section describes the domain of validity of the various codes:
 
-    - Various approximations made (e.g., RZ, quasistatic, etc.)
-    - Which physics is captured (e.g., ion motion? hosing? Coulomb scattering? betatron losses? self-injection?)
+.. toctree::
+   :maxdepth: 1
 
-    This section is in-progress.
-    Please `contribute here <https://github.com/10TeV-wakefield-collider/simulation_guide>`__.
+   qpad/index
+   hipace/index
+   wake_t/index
+
+
+The documentation includes details on:
+
+- Various approximations made (e.g., RZ, quasistatic, etc.)
+- Which physics is captured (e.g., ion motion? hosing? asymmetric beams? Coulomb scattering? betatron losses? self-injection?)
+
+This section is in-progress.
+Please `contribute here <https://github.com/10TeV-wakefield-collider/simulation_guide>`__.
+
+
+
+
+
+

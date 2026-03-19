@@ -1,0 +1,17 @@
+.float-figure {
+  float: right;                /* or left */
+  width: 40%;      /* responsive width */
+  margin: 0 0 1em 1.2em;
+  text-align: center;
+}
+
+.float-figure img {
+  width: 100%;                 /* image fills container */
+  height: auto;
+}
+
+.float-figure .rubric {
+  font-size: 0.9em;            /* scales with text */
+  margin-top: 0.4em;
+  line-height: 1.2;
+}
